@@ -1,5 +1,22 @@
 ## dfstore 
 
+This is a modified package from the original dfstore. It adds the API for the query string input. 
+The query (read) API supports (1) the nested query condition (2) select columns to display 
+
+Examples of nested query condition:
+`(([[title]] != {"Blue Train"}) AND ([[artist]] != {"John Coltrane"})) OR ([[hardcover]] == {"true"})) OR ([[year]] IN {"2018", "2022"})`,
+
+where 
+() It uses parentheses to group the logic
+[[table_filedname]]
+{} ... value (operand) for the operator
+operator = "==", "!=", ">=", "<=", "<", ">", IN
+aggregator = AND, OR
+
+How to test this API in shown at the end of this readme
+
+--- Original dfstrore explanation 
+
 This is an experimental package to implement a database agnostic API that supports various backend databases such as redis, mongodb, PostgreSQL and other SQL databases using the abstraction based on dataframe grids often used in data science projects that depend on python pandas or scala RDD or similar.  Use of dataframe in Go language implementation of dfstore depends on gota at 	
 
 https://github.com/go-gota/gota
@@ -56,6 +73,19 @@ dataRows = [][]string{
 	}
 	res, err := dfs.ReadRecords(filters, 20)
 ```
+
+### read database using query string 
+
+```
+
+columns := []string{"artist", "year", "title", "hardcover"}
+as := []string{"ARTIST", "YEAR", "TITLE", "HARDCOVER?"}
+condition := `(([[title]] != {"Blue Train"}) AND ([[artist]] != {"John Coltrane"})) OR ([[hardcover]] == {"true"})) OR ([[year]] == {"2018"})`,
+ 
+res, err := dfs.ReadRecordsString(columns, as, condition, 20)
+
+```
+		
 
 ## Testing
 
@@ -152,4 +182,10 @@ go test
 go test -run Memory
 go test -run Doc 
 go test -run Default
+```
+### go test for query string API
+```
+go test -run Parse  // to create the DB for testing & test the query API
+go test -run ParseCreateDB  // to create the DB for testing
+go test -run ParseString1   // to test the query API
 ```
