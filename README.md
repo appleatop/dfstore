@@ -156,7 +156,7 @@ dfstore1> db.getUsers()
 ```
 
 Later once the test is done, we can check the database in MogoDB using the following command. 
-'''
+```
 dfstore1> db.getCollection('table1').find().forEach(printjson)
 {
   _id: ObjectId("000000000000000000000000"),
