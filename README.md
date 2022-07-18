@@ -186,6 +186,6 @@ go test -run Default
 ### go test for query string API
 ```
 go test -run Parse  // to create the DB for testing & test the query API
-go test -run ParseCreateDB  // to create the DB for testing
-go test -run ParseString1   // to test the query API
+go test -run ParseCreateDB  // to create the DB for testing 
+go test -run ParseString1   // to test the query API (Must run ParseCreateDB first)
 ```
