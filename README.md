@@ -144,14 +144,19 @@ test> db.dropDatabase('test')
 test> use dfstore1
 switched to db dfstore1
 
-dfstore1> db.createCollection('table1')
+dfstore1> db.createCollection('table1')  <--- This is to create table1 for go test -run Doc
+dfstore1> db.createCollection('table2')  <--- This is to create table1 for go test -run Parse, ParseCreateDB and ParseString
+
 
 dfstore1> db.getCollectionNames()
 
 dfstore1>  db.createUser( { user: 'root',pwd: 'rootpass', roles: [ { role: "readWrite", db: "dfstore1"} ] } )
 
 dfstore1> db.getUsers()
+```
 
+Later once the test is done, we can check the database in MogoDB using the following command. 
+'''
 dfstore1> db.getCollection('table1').find().forEach(printjson)
 {
   _id: ObjectId("000000000000000000000000"),
