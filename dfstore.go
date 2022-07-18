@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/bobbae/q"
-	"github.com/appleatop/dfstore/dbquery"
+	"dfstore/dbquery"
 
 	"github.com/go-gota/gota/dataframe"
 	"github.com/go-redis/redis"
