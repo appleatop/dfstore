@@ -1,0 +1,54 @@
+name: CI Demo   
+on:
+  workflow_dispatch:
+    inputs: 
+      inputcommand: 
+        description: 'any command to run on runner. It can be a command or shell script. '
+      servicename: 
+        description: 'docker service to run the command'
+      servicecommand: 
+        description: 'command to run on dockers. It can be a command or shell script. '
+jobs:
+  CICD-Test-Integration-Sample:
+    # build the code in the GitHub Runner 
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v3
+        id: repository_checkout
+      - name: Set Docker Prefix Time 
+        # create the unique docker and container name starting with cicd_ 
+        # Users can recognize if the cicd is running on the testbed
+        id: docker_prefix
+        run: echo "::set-output name=docker_prefix::cicd$(date '+%d%m%H%M')"
+      - name: Create Docker Image
+        # build and launch the containers
+        id: cicd_build
+        run: |
+          echo docker_prefix=${{steps.docker_prefix.outputs.docker_prefix}} 
+          cp cicd/docker/Dockerfile_build_linux .
+          cp cicd/docker/docker-compose-cicdtest.yml . 
+          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-cicdtest.yml build  
+          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-cicdtest.yml up --detach 
+          rm Dockerfile_build_linux
+          rm docker-compose-cicdtest.yml
+      - name: Setup Unit Test Environment 
+        run: | 
+          echo docker_prefix=${{steps.docker_prefix.outputs.docker_prefix}} 
+          cp cicd/docker/Dockerfile_unittest_env_linux .
+          cp cicd/docker/docker-compose-unittest_env.yml . 
+          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-unittest.yml up --build --detach 
+          rm Dockerfile_unittest_env_linux
+          rm docker-compose-unittest_env.yml       
+      - name: Run Command on Host
+        if: github.event.inputs.inputcommand != ''
+        run: |
+          echo running command on host ${{inputs.inputcommand}}
+          ${{inputs.inputcommand}}
+      - name: Run Command on Service Docker Container
+        if: github.event.inputs.servicename != '' && github.event.inputs.servicecommand != ''
+        run: |
+          echo running command ${{inputs.servicecommand}} on docker ${{steps.docker_prefix.outputs.docker_prefix}}_${{inputs.servicename}} 
+          docker ps -a
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_${{inputs.servicename}} ${{inputs.servicecommand}}
+      

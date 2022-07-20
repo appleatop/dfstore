@@ -1,0 +1,17 @@
+FROM golang:1.18.3-bullseye AS build
+WORKDIR /build/dfstore
+COPY go.mod go.sum ./
+RUN go mod tidy
+COPY . . 
+# build 
+RUN go run main.go 
+RUN mkdir -p /build/bin\
+    && go build -o /build/bin/dfstore cmd/main.go\
+    && go test -c -o /build/bin/dfstore_test ./...
+
+# Production servies 
+FROM build AS production
+WORKDIR /app
+COPY --from=build /build/bin/dfstore ./
+COPY --from=build /build/bin/dfstore_test ./
+ENTRYPOINT  ["/bin/bash"]

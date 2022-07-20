@@ -1,0 +1,103 @@
+services:
+  dfstore_build: 
+    build: 
+      context: .
+      dockerfile: Dockerfile_build_linux
+      target: build 
+    image: ${DOCKER_PREFIX}_image_dfstore_build
+    container_name: ${DOCKER_PREFIX}_dfstore_build
+    networks: 
+      deploynet: 
+        alias: 
+          - dfstore_build
+    stdin_open: true
+    tty: true
+  dfstore_production:
+    build: 
+      context: .
+      dockerfile: Dockerfile_build_linux
+      target: production
+    image: ${DOCKER_PREFIX}_image_dfstore_production
+    container_name: ${DOCKER_PREFIX}_dfstore_production
+    depends_on:      
+      - postgresql
+      - redis
+      - rediscli
+      - mongo
+      - mongosh
+    networks: 
+      deploynet: 
+        alias: 
+          - dfstore_production
+    stdin_open: true
+
+  redis:
+    image: redis
+    ports: 
+      - "6379:6379"
+    container_name: ${DOCKER_PREFIX}_redis
+    networks: 
+      deploynet: 
+        alias: 
+          - redis
+
+  rediscli: 
+    image: redis
+    container_name: ${DOCKER_PREFIX}_rediscli
+    networks: 
+      deploynet: 
+    depends_on:      
+      - redis 
+    command: >
+      bash -c "redis-cli -h redis config set requirepass password"
+
+
+  postgresql:
+    image: postgres
+    container_name: ${DOCKER_PREFIX}_postgresql
+    ports:
+      - "5432:5432"
+    volumes:
+      - 'testscripts:testscripts'
+    environment:
+      - POSTGRES_USER=pguser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=testdb
+    restart: always
+    networks: 
+      deploynet: 
+        alias: 
+          - postgresql
+    command: >
+      bash -c "set PGPASSWORD=password;\
+      cat /testscripts/psql_commands.txt | psql -h localhost -p 5432 -U pguser -d postgres"
+
+  mongo:
+    image: mongo
+    container_name: ${DOCKER_PREFIX}_mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+    restart: always
+    networks: 
+      deploynet: 
+        alias: 
+          - mongo 
+
+  mongosh:
+    build: 
+      context: .
+      dockerfile: Dockerfile_unittest_env_linux
+      target: mongosh 
+    image: ${DOCKER_PREFIX}_image_mongosh
+    container_name: ${DOCKER_PREFIX}_mongosh 
+    networks: 
+      deploynet: 
+    depends_on:      
+      - mongo
+
+networks: 
+  deploynet: 
+
