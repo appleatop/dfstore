@@ -59,8 +59,8 @@ jobs:
       - name: System Integration Test
         id: system_test
         run: |
-          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore dfstore
-          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore dfstore_test
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore ./dfstore
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore ./dfstore_test
           docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore bash testscripts/systest.sh 
 
 
