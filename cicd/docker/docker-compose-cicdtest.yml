@@ -8,8 +8,32 @@ services:
     image: ${DOCKER_PREFIX}_image_dfstore_build
     container_name: ${DOCKER_PREFIX}_dfstore_build
     depends_on:      
-      dfstore_testsetup:
+      dfstore_unittest_setup:
         condition: service_completed_successfully
     stdin_open: true
     tty: true
+    profiles: ["build", "unittest"]
+    networks:
+      - net_unittest
+
+  dfstore_system: 
+    build: 
+      context: .
+      dockerfile: Dockerfile_build_linux
+      target: production 
+    image: ${DOCKER_PREFIX}_image_dfstore
+    container_name: ${DOCKER_PREFIX}_dfstore
+    depends_on:      
+      dfstore_systest_setup:
+        condition: service_completed_successfully
+    stdin_open: true
+    tty: true
+    profiles: ["production", "systest"]
+    networks:
+      - net_systest
+
+networks:
+  net_unittest:
+  net_systest:
+
 

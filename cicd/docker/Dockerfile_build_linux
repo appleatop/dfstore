@@ -6,7 +6,8 @@ COPY . .
 # build 
 RUN go run cmd/main.go 
 RUN mkdir -p /build/bin\
-    && go build -o /build/bin/dfstore cmd/main.go
+    && go build -o /build/bin/dfstore cmd/main.go\
+    && go test -c -o /build/bin/dfstore_test ./
 RUN apt-get update\
     && apt-get install -y wget gnupg\
     && apt-get install -y net-tools iputils-ping dnsutils
@@ -23,4 +24,5 @@ FROM debian:bullseye AS production
 WORKDIR /app
 COPY --from=build /build/bin/dfstore ./
 COPY --from=build /build/bin/dfstore_test ./
+COPY --from=build /build/dfstore/testscripts ./
 ENTRYPOINT  ["/bin/bash"]

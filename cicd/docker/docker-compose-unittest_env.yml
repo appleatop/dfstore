@@ -1,27 +1,36 @@
 # This is to set up the testing environment for the unit test
 services:
-  dfstore_testsetup: 
+  dfstore_unittest_setup: 
     build: 
       context: .
       dockerfile: Dockerfile_unittest_env_linux
-      target: testsetup 
-    image: ${DOCKER_PREFIX}_image_dfstore_testsetup
-    container_name: ${DOCKER_PREFIX}_dfstore_testsetup
+      target: unit_test 
+    image: ${DOCKER_PREFIX}_image_dfstore_unittest
+    container_name: ${DOCKER_PREFIX}_dfstore_unittest
     depends_on:      
-      - redis  
-      - postgresql
-      - mongo   
-    command: testinit.sh 
+      - unittest_redis  
+      - unittest_postgresql
+      - unittest_mongo   
+    command: unittest_init.sh 
     stdin_open: true
     tty: true
-  redis:
+    profiles: ["unittest"]
+    networks: 
+      - net_unittest
+  unittest_redis:
     image: redis
     ports: 
       - "6379:6379"
-    container_name: ${DOCKER_PREFIX}_redis
-  postgresql:
+    container_name: ${DOCKER_PREFIX}_unittest_redis
+    profiles: ["unittest"]
+    networks: 
+      net_unittest:
+        aliases: 
+          - redis
+
+  unittest_postgresql:
     image: postgres
-    container_name: ${DOCKER_PREFIX}_postgresql
+    container_name: ${DOCKER_PREFIX}_unittest_postgresql
     ports:
       - "5432:5432"
     environment:
@@ -29,13 +38,23 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=testdb
     restart: always
-  mongo:
+    profiles: ["unittest"]
+    networks: 
+      net_unittest:
+        aliases: 
+          - postgresql
+  unittest_mongo:
     image: mongo
-    container_name: ${DOCKER_PREFIX}_mongo
+    container_name: ${DOCKER_PREFIX}_unittest_mongo
     ports:
       - "27017:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=rootpass
     restart: always
+    profiles: ["unittest"]
+    networks: 
+      net_unittest:
+        aliases: 
+          - mongo
 

@@ -196,12 +196,20 @@ go test -run ParseString1   // to test the query API (Must run ParseCreateDB fir
 ```
 ## CICD Testing
 
-Try to integrate the build and unit test in the CICD. 
-All the related docker files and docker compose files are located in cicd/docker directory. 
-The test scripts are in testscripts directory. 
+CICD workflows include the build, the unit tests and the system integration tests. 
+All the related docker files and docker compose files are located in the "cicd/docker" directory. 
+The test scripts are in the "testscripts" directory. 
 
-In the go test, it assumes the presence of Postgresql, Mongo and Redis database. All these database servers is setup to run in separate containers using the configuration in Dockerfile_unittest_env_linux and docker-compose-unittest_env.yml, respectively. 
+### Unit Test 
+The unit test is go test ./... which assumes the presence of Postgresql, Mongo and Redis databases. All these database servers are set up to run in separate containers using the configuration in Dockerfile_unittest_env_linux and docker-compose-unittest_env.yml, respectively. 
 
-The container ${DOCKER_PREFIX}_dfstore_testsetup will spawn the database client to setup the database required by the go test program. It will ensure that all database servers are already up before proceeding the operation. The setup operation is written in testscripts/testinit.sh
+The container ${DOCKER_PREFIX}_dfstore_unittest contains all database clients to initalize the database data required by the go test program. It will ensure that all database servers are already up before proceeding the operation. The operation is written in testscripts/unittest_init.sh. 
 
 Once, the test setup is done, CICD process will start to build the code and run go test. 
+
+### System Integration Test
+After the unit test is completed, all containers will be stopped. Then we start the containers required to set up the environment for system integration using the configuration in Dockerfile_systest_linux and docker-compose-systest.yml, respectively. 
+
+The container ${DOCKER_PREFIX}_dfstore_systest takes care of the system integration setup written in testscripts/systest_init.sh. 
+
+Once, the test setup is done, CICD process will start to execute testscripts/systest.sh. 

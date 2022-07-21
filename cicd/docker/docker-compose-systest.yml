@@ -1,0 +1,59 @@
+# This is to set up the testing environment for the unit test
+services:
+  dfstore_systest_setup: 
+    build: 
+      context: .
+      dockerfile: Dockerfile_systest_linux
+      target: system_test 
+    image: ${DOCKER_PREFIX}_image_dfstore_systest
+    container_name: ${DOCKER_PREFIX}_dfstore_systest
+    depends_on:      
+      - systest_redis  
+      - systest_postgresql
+      - systest_mongo   
+    command: systest_init.sh 
+    stdin_open: true
+    tty: true
+    profiles: ["systest"]
+    networks:
+      - net_systest
+  systest_redis:
+    image: redis
+    ports: 
+      - "6379:6379"
+    container_name: ${DOCKER_PREFIX}_redis
+    profiles: ["systest"]
+    networks:
+      net_systest:
+        aliases:
+          - redis
+  systest_postgresql:
+    image: postgres
+    container_name: ${DOCKER_PREFIX}_postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=pguser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=testdb
+    restart: always
+    profiles: ["systest"]
+    networks:
+      net_systest:
+        aliases:
+          - postgresql
+  systest_mongo:
+    image: mongo
+    container_name: ${DOCKER_PREFIX}_mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+    restart: always
+    profiles: ["systest"]
+    networks:
+      net_systest:
+        aliases:
+          - mongo
+

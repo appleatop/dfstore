@@ -23,6 +23,6 @@ done
 #set up the database data initization
 echo "All servers are ready"
 redis-cli -h redis config set requirepass password
-cat psql_commands.txt | PGPASSWORD=password psql -h postgresql -p 5432 -U pguser -d postgres
-mongosh mongodb://root:rootpass@mongo:27017 -f mongodb_commands.js
-echo "running testinit.sh is completed"
+cat psql_system_commands.txt | PGPASSWORD=password psql -h postgresql -p 5432 -U pguser -d postgres
+mongosh mongodb://root:rootpass@mongo:27017 -f mongodb_system_commands.js
+echo "running systest_init.sh is completed"

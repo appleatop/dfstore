@@ -1,4 +1,4 @@
-FROM debian:bullseye AS unit_test 
+FROM debian:bullseye AS system_test 
 WORKDIR /testscripts
 COPY testscripts ./
 ARG TZ=Etc/UTC
