@@ -37,9 +37,13 @@ jobs:
           echo docker_prefix=${{steps.docker_prefix.outputs.docker_prefix}} 
           cp cicd/docker/Dockerfile_unittest_env_linux .
           cp cicd/docker/docker-compose-unittest_env.yml . 
-          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-unittest.yml up --build --detach 
+          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-unittest_env.yml up --build --detach 
           rm Dockerfile_unittest_env_linux
           rm docker-compose-unittest_env.yml       
+      - name: Go Unit Test
+        id: unit_test
+        run: |
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_buid go test -v ./...
       - name: Run Command on Host
         if: github.event.inputs.inputcommand != ''
         run: |

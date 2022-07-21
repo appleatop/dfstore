@@ -97,6 +97,9 @@ services:
       deploynet: 
     depends_on:      
       - mongo
+    command: >
+      bash -c "set PGPASSWORD=password;\
+      cat /testscripts/psql_commands.txt | psql -h localhost -p 5432 -U pguser -d postgres"
 
 networks: 
   deploynet: 

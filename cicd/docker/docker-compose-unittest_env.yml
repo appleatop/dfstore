@@ -1,158 +1,110 @@
 services:
-  nmsbuild: 
+  dfstore_build: 
     build: 
       context: .
       dockerfile: Dockerfile_build_linux
       target: build 
-    image: ${DOCKER_PREFIX}_image_nmsbuild
-    container_name: ${DOCKER_PREFIX}_nmsbuild
-    stdin_open: true
-    tty: true
-  nmstest:
-    build: 
-      context: .
-      dockerfile: Dockerfile_build_linux
-      target: nmstest 
-    image: ${DOCKER_PREFIX}_image_nmstest
-    container_name: ${DOCKER_PREFIX}_nmstest 
+    image: ${DOCKER_PREFIX}_image_dfstore_build
+    container_name: ${DOCKER_PREFIX}_dfstore_build
     depends_on:      
+      - redis  
       - postgresql
-      - serviceswatcher
-      - snmpscan
-      - inventory
-      - config
-      - atopudpscan
-      - scanservice
+      - mongo   
+    networks: 
+      deploynet: 
     stdin_open: true
     tty: true
-  serviceswatcher:
+  dfstore_test: 
     build: 
       context: .
-      target: serviceswatcher
       dockerfile: Dockerfile_build_linux
-    image: ${DOCKER_PREFIX}_image_serviceswatcher
-    container_name: ${DOCKER_PREFIX}_serviceswatcher
-    ports:
-      - "8081:8081"
-    command: run
-  snmpscan:
-    build: 
-      context: .
-      target: snmpscan
-      dockerfile: Dockerfile_build_linux
-    image: ${DOCKER_PREFIX}_image_snmpscan
-    container_name: ${DOCKER_PREFIX}_snmpscan
-    depends_on:
-      - serviceswatcher
+      target: test 
+    image: ${DOCKER_PREFIX}_image_dfstore_test
+    container_name: ${DOCKER_PREFIX}_dfstore_test
+    depends_on:      
+      - redis  
       - postgresql
-    ports:
-      - "8384:8384"
-    command: run
-  inventory:
-    build:
-      context: .
-      target: inventory
-      dockerfile: Dockerfile_build_linux
-    image: ${DOCKER_PREFIX}_image_inventory
-    container_name: ${DOCKER_PREFIX}_inventory
-    depends_on:
-      - postgresql
-    ports:
-      - "8101:8101"
-      - "8111:8111"
-    command: run
-  config:
-    build: 
-      context: .
-      target: config
-      dockerfile: Dockerfile_build_linux
-    image: ${DOCKER_PREFIX}_image_config
-    container_name: ${DOCKER_PREFIX}_config
-    depends_on:
-      - serviceswatcher
-      - postgresql
-      - rabbitmq
-    ports:
-      - "8085:8085"
-    command: run
-  atopudpscan:
-    build: 
-      context: . 
-      target: atopudpscan
-      dockerfile: Dockerfile_build_linux
-    image: ${DOCKER_PREFIX}_image_atopudpscan
-    container_name: ${DOCKER_PREFIX}_atopudpscan
-    depends_on:
-      - serviceswatcher
-      - postgresql
-    network_mode: "host"
-    command: run
-  scanservice:
-    build: 
-      context: .
-      target: scanservice
-      dockerfile: Dockerfile_build_linux
-    image: ${DOCKER_PREFIX}_image_scanservice
-    container_name: ${DOCKER_PREFIX}_scanservice
-    depends_on:
-      - serviceswatcher
-      - postgresql
-    ports:
-      - 8088:8088
-      - 8098:8098
-    extra_hosts:
-      - "atopudpscan:host-gateway"
-    command: run
- #
-  # mongo:
-  #   image: mongo
-
-  # datastore:
-  #   build: ../../datastore
-  #   command: run
-  #   ports:
-  #     - 8082:8082
-
-  # testing:
-  #   build: ./testing
-  #   depends_on:
-  #     - serviceswatcher
-  #     - postgresql
-
-  # snmpsim:
-  #   build: ./snmpscan/test/testdata
-
+      - mongo   
+    networks: 
+      deploynet: 
+    stdin_open: true
+    tty: true
   redis:
     image: redis
+    ports: 
+      - "6379:6379"
     container_name: ${DOCKER_PREFIX}_redis
+    networks: 
+      deploynet: 
 
+  rediscli: 
+    image: redis
+    container_name: ${DOCKER_PREFIX}_rediscli
+    networks: 
+      deploynet: 
+    depends_on:      
+      - redis 
+    command: bash -c "redis-cli -h redis config set requirepass password"
   postgresql:
     image: postgres
-    container_name: ${DOCKER_PREFIX}_postgres
+    container_name: ${DOCKER_PREFIX}_postgresql
     ports:
       - "5432:5432"
+    volumes:
+      - './testscripts:/testscripts'
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=nms
+      - POSTGRES_USER=pguser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=testdb
     restart: always
+    networks: 
+      deploynet: 
+    command: | 
+      bash -c "set PGPASSWORD=password;cat /testscripts/psql_commands.txt | psql -h localhost -p 5432 -U pguser -d postgres"
 
-  # nmsfrontend:
-  #   build: ./frontend
-  #   container_name: nmsfrontend_c
-  #   ports:
-  #     - 3000:3000
-  #   stdin_open: true
-  #   tty: true
-    
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: ${DOCKER_PREFIX}_rabbitmq
+  mongo:
+    image: mongo
+    container_name: ${DOCKER_PREFIX}_mongo
     ports:
-      - 15672:15672
-      - 5672:5672
-      - 1883:1883
+      - "27017:27017"
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    command: "/bin/bash -c \"rabbitmq-plugins enable rabbitmq_mqtt; rabbitmq-server; sleep 1; rabbitmqctl set_permissions -p / guest '.*' '.*' '.*'\""
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+    restart: always
+    networks: 
+      deploynet: 
+
+  mongosh:
+    build: 
+      context: .
+      dockerfile: Dockerfile_unittest_env_linux
+      target: mongosh 
+    image: ${DOCKER_PREFIX}_image_mongosh
+    container_name: ${DOCKER_PREFIX}_mongosh 
+    networks: 
+      deploynet: 
+    depends_on:      
+      - mongo
+    environment: 
+      - DOCKER_PREFIX
+    command: bash -c "echo ${DOCKER_PREFIX}; mongosh mongodb://root:rootpass@mongo:27017 -f /testscripts/mongodb_commands.js"
+
+  mongosh_cli:
+    build: 
+      context: .
+      dockerfile: Dockerfile_unittest_env_linux
+      target: mongosh 
+    image: ${DOCKER_PREFIX}_image_mongosh_cli
+    container_name: ${DOCKER_PREFIX}_mongosh_cli 
+    networks: 
+      deploynet: 
+    depends_on:      
+      - mongo
+    environment: 
+      - DOCKER_PREFIX
+    stdin_open: true
+    tty: true
+
+networks: 
+  deploynet: 
+

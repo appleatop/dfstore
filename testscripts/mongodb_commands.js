@@ -1,5 +1,5 @@
 db.dropDatabase('test')
-db.getSiblingDB('dfstore1')
+db=db.getSiblingDB('dfstore1')
 db.createCollection('table1')  
 db.createCollection('table2')  
 db.getCollectionNames()

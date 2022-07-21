@@ -62,19 +62,24 @@ func New(ctx context.Context, kind string) (*DFStore, error) {
 		switch kind {
 		case "default":
 			//URL = "postgres://pguser:password@localhost:5432/dfstore1/table1?sslmode=disable"
-			URL = "postgres://pguser:password@localhost:5432/dfstore1/table1"
+			//URL = "postgres://pguser:password@localhost:5432/dfstore1/table1"
+			URL = "postgres://pguser:password@progresql:5432/dfstore1/table1"
 		case "document":
 			//URL = "mongodb://root:rootpass@localhost:27017/dfstore1/table1?maxPoolSize=20&w=majority"
-			URL = "mongodb://root:rootpass@localhost:27017/dfstore1/table1"
+			//URL = "mongodb://root:rootpass@localhost:27017/dfstore1/table1"
+			URL = "mongodb://root:rootpass@mongo:27017/dfstore1/table1"
 		case "timeseries":
-			URL = "timescale://tsuser:password@localhost:5432/dfstore1/table1"
+			//URL = "timescale://tsuser:password@localhost:5432/dfstore1/table1"
+			URL = "timescale://tsuser:password@progresql:5432/dfstore1/table1"
 		case "memory":
-			URL = "redis://root:password@localhost:6379/0/table1"
+			//URL = "redis://root:password@localhost:6379/0/table1"
+			URL = "redis://root:password@redis:6379/0/table1"
 		case "blob":
 			URL = "blob://root:password@/home/testuser/blobdir:0/dfstore1/table1"
 			// URL = "blob://root:password@aws.bucket:0/dfstore1/table1"
 		case "parse":
-			URL = "mongodb://root:rootpass@localhost:27017/dfstore1/table2"
+			//URL = "mongodb://root:rootpass@localhost:27017/dfstore1/table2"
+			URL = "mongodb://root:rootpass@mongo:27017/dfstore1/table2"
 
 		default:
 			URL = kind

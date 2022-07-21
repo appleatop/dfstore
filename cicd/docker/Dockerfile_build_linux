@@ -4,13 +4,19 @@ COPY go.mod go.sum ./
 RUN go mod tidy
 COPY . . 
 # build 
-RUN go run main.go 
+RUN go run cmd/main.go 
 RUN mkdir -p /build/bin\
-    && go build -o /build/bin/dfstore cmd/main.go\
-    && go test -c -o /build/bin/dfstore_test ./...
+    && go build -o /build/bin/dfstore cmd/main.go
 
 # Production servies 
-FROM build AS production
+FROM debian:bullseye AS test
+WORKDIR /build
+COPY --from=build /build/dfstore ./
+COPY --from=build /build/bin ./
+ENTRYPOINT  ["/bin/bash"]
+
+# Production servies 
+FROM debian:bullseye AS production
 WORKDIR /app
 COPY --from=build /build/bin/dfstore ./
 COPY --from=build /build/bin/dfstore_test ./
