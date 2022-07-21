@@ -34,8 +34,6 @@ services:
     container_name: ${DOCKER_PREFIX}_redis
     networks: 
       deploynet: 
-        alias: 
-          - redis
 
   rediscli: 
     image: redis
