@@ -22,7 +22,7 @@ jobs:
         # Users can recognize if the cicd is running on the testbed
         id: docker_prefix
         run: echo "::set-output name=docker_prefix::cicd$(date '+%d%m%H%M')"
-      - name: Create Docker Image 
+      - name: Build and Unit Test Setup 
         # build and launch the containers
         id: cicd_build_and_test_setup
         run: |
@@ -31,7 +31,7 @@ jobs:
           cp cicd/docker/docker-compose-cicdtest.yml . 
           cp cicd/docker/Dockerfile_unittest_env_linux .
           cp cicd/docker/docker-compose-unittest_env.yml . 
-          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-cicdtest.yml -f docker-compose-unittest_env.yml up --build --detach 
+          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose --profile unittest -f docker-compose-cicdtest.yml -f docker-compose-unittest_env.yml up --build --detach 
           rm Dockerfile_build_linux
           rm docker-compose-cicdtest.yml
           rm Dockerfile_unittest_env_linux
@@ -40,6 +40,9 @@ jobs:
         id: unit_test
         run: |
           docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore_build go test -v ./...
+      - name: Teardown Unit Test
+        run: |
+          docker compose --profile unittest -f docker-compose-cicdtest.yml -f docker-compose-unittest_env.yml stop
       - name: Run Command on Host
         if: github.event.inputs.inputcommand != ''
         run: |
@@ -51,4 +54,28 @@ jobs:
           echo running command ${{inputs.servicecommand}} on docker ${{steps.docker_prefix.outputs.docker_prefix}}_${{inputs.servicename}} 
           docker ps -a
           docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_${{inputs.servicename}} ${{inputs.servicecommand}}
+      - name: System Integration Test Setup
+        id: system_test_setup
+        run: |
+          cp cicd/docker/Dockerfile_build_linux .
+          cp cicd/docker/docker-compose-cicdtest.yml . 
+          cp cicd/docker/Dockerfile_systest_linux .
+          cp cicd/docker/docker-compose-systest.yml . 
+          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose --profile systest -f docker-compose-cicdtest.yml -f docker-compose-systest.yml up --build --detach 
+          rm Dockerfile_build_linux
+          rm docker-compose-cicdtest.yml
+          rm Dockerfile_systest_linux
+          rm docker-compose-systest.yml  
+      - name: System Integration Test
+        id: system_test
+        run: |
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore dfstore
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore dfstore_test
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore bash testscripts/systest.sh 
+
+
+      - name: Teardown System Integration Test
+        run: |
+          docker compose --profile systest -f docker-compose-cicdtest.yml -f docker-compose-systest.yml stop
+
       
