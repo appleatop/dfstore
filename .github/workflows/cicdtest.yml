@@ -21,29 +21,24 @@ jobs:
         # Users can recognize if the cicd is running on the testbed
         id: docker_prefix
         run: echo "::set-output name=docker_prefix::cicd$(date '+%d%m%H%M')"
-      - name: Create Docker Image
+      - name: Create Docker Image 
         # build and launch the containers
-        id: cicd_build
+        id: cicd_build_and_test_setup
         run: |
           echo docker_prefix=${{steps.docker_prefix.outputs.docker_prefix}} 
           cp cicd/docker/Dockerfile_build_linux .
           cp cicd/docker/docker-compose-cicdtest.yml . 
-          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-cicdtest.yml build  
-          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-cicdtest.yml up --detach 
-          rm Dockerfile_build_linux
-          rm docker-compose-cicdtest.yml
-      - name: Setup Unit Test Environment 
-        run: | 
-          echo docker_prefix=${{steps.docker_prefix.outputs.docker_prefix}} 
           cp cicd/docker/Dockerfile_unittest_env_linux .
           cp cicd/docker/docker-compose-unittest_env.yml . 
-          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-unittest_env.yml up --build --detach 
+          DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose -f docker-compose-cicdtest.yml -f docker-compose-unittest_env.yml up --build --detach 
+          rm Dockerfile_build_linux
+          rm docker-compose-cicdtest.yml
           rm Dockerfile_unittest_env_linux
           rm docker-compose-unittest_env.yml       
       - name: Go Unit Test
         id: unit_test
         run: |
-          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_buid go test -v ./...
+          docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore_build go test -v ./...
       - name: Run Command on Host
         if: github.event.inputs.inputcommand != ''
         run: |

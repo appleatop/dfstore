@@ -7,6 +7,9 @@ COPY . .
 RUN go run cmd/main.go 
 RUN mkdir -p /build/bin\
     && go build -o /build/bin/dfstore cmd/main.go
+RUN apt-get update\
+    && apt-get install -y wget gnupg\
+    && apt-get install -y net-tools iputils-ping dnsutils
 
 # Production servies 
 FROM debian:bullseye AS test

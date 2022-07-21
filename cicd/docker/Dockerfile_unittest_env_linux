@@ -1,9 +1,15 @@
-FROM ubuntu:20.04 AS mongosh
+FROM debian:bullseye AS testsetup 
 WORKDIR /testscripts
 COPY testscripts ./
+ARG TZ=Etc/UTC
 RUN apt-get update\
     && apt-get install -y wget gnupg\
+    && apt-get install -y net-tools iputils-ping dnsutils\
     && wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/mongodb.gpg > /dev/null\
     && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-5.0.list\
     && apt-get update\
-    && apt-get install -y  mongodb-mongosh-shared-openssl11
+    && apt-get install -y  mongodb-mongosh-shared-openssl11\
+    && apt-get install -y postgresql\
+    && apt-get install -y redis-tools
+RUN chmod 755 ./*.sh
+ENTRYPOINT ["/bin/bash"]

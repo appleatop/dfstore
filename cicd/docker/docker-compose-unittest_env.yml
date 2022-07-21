@@ -1,32 +1,17 @@
+# This is to set up the testing environment for the unit test
 services:
-  dfstore_build: 
+  dfstore_testsetup: 
     build: 
       context: .
-      dockerfile: Dockerfile_build_linux
-      target: build 
-    image: ${DOCKER_PREFIX}_image_dfstore_build
-    container_name: ${DOCKER_PREFIX}_dfstore_build
+      dockerfile: Dockerfile_unittest_env_linux
+      target: testsetup 
+    image: ${DOCKER_PREFIX}_image_dfstore_testsetup
+    container_name: ${DOCKER_PREFIX}_dfstore_testsetup
     depends_on:      
       - redis  
       - postgresql
       - mongo   
-    networks: 
-      deploynet: 
-    stdin_open: true
-    tty: true
-  dfstore_test: 
-    build: 
-      context: .
-      dockerfile: Dockerfile_build_linux
-      target: test 
-    image: ${DOCKER_PREFIX}_image_dfstore_test
-    container_name: ${DOCKER_PREFIX}_dfstore_test
-    depends_on:      
-      - redis  
-      - postgresql
-      - mongo   
-    networks: 
-      deploynet: 
+    command: testinit.sh 
     stdin_open: true
     tty: true
   redis:
@@ -34,34 +19,16 @@ services:
     ports: 
       - "6379:6379"
     container_name: ${DOCKER_PREFIX}_redis
-    networks: 
-      deploynet: 
-
-  rediscli: 
-    image: redis
-    container_name: ${DOCKER_PREFIX}_rediscli
-    networks: 
-      deploynet: 
-    depends_on:      
-      - redis 
-    command: bash -c "redis-cli -h redis config set requirepass password"
   postgresql:
     image: postgres
     container_name: ${DOCKER_PREFIX}_postgresql
     ports:
       - "5432:5432"
-    volumes:
-      - './testscripts:/testscripts'
     environment:
       - POSTGRES_USER=pguser
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=testdb
     restart: always
-    networks: 
-      deploynet: 
-    command: | 
-      bash -c "set PGPASSWORD=password;cat /testscripts/psql_commands.txt | psql -h localhost -p 5432 -U pguser -d postgres"
-
   mongo:
     image: mongo
     container_name: ${DOCKER_PREFIX}_mongo
@@ -71,40 +38,4 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=rootpass
     restart: always
-    networks: 
-      deploynet: 
-
-  mongosh:
-    build: 
-      context: .
-      dockerfile: Dockerfile_unittest_env_linux
-      target: mongosh 
-    image: ${DOCKER_PREFIX}_image_mongosh
-    container_name: ${DOCKER_PREFIX}_mongosh 
-    networks: 
-      deploynet: 
-    depends_on:      
-      - mongo
-    environment: 
-      - DOCKER_PREFIX
-    command: bash -c "echo ${DOCKER_PREFIX}; mongosh mongodb://root:rootpass@mongo:27017 -f /testscripts/mongodb_commands.js"
-
-  mongosh_cli:
-    build: 
-      context: .
-      dockerfile: Dockerfile_unittest_env_linux
-      target: mongosh 
-    image: ${DOCKER_PREFIX}_image_mongosh_cli
-    container_name: ${DOCKER_PREFIX}_mongosh_cli 
-    networks: 
-      deploynet: 
-    depends_on:      
-      - mongo
-    environment: 
-      - DOCKER_PREFIX
-    stdin_open: true
-    tty: true
-
-networks: 
-  deploynet: 
 
