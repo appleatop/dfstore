@@ -32,10 +32,6 @@ jobs:
           cp cicd/docker/Dockerfile_unittest_env_linux .
           cp cicd/docker/docker-compose-unittest_env.yml . 
           DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose --profile unittest -f docker-compose-cicdtest.yml -f docker-compose-unittest_env.yml up --build --detach 
-          rm Dockerfile_build_linux
-          rm docker-compose-cicdtest.yml
-          rm Dockerfile_unittest_env_linux
-          rm docker-compose-unittest_env.yml       
       - name: Go Unit Test
         id: unit_test
         run: |
@@ -57,15 +53,9 @@ jobs:
       - name: System Integration Test Setup
         id: system_test_setup
         run: |
-          cp cicd/docker/Dockerfile_build_linux .
-          cp cicd/docker/docker-compose-cicdtest.yml . 
           cp cicd/docker/Dockerfile_systest_linux .
           cp cicd/docker/docker-compose-systest.yml . 
           DOCKER_PREFIX=${{steps.docker_prefix.outputs.docker_prefix}} docker compose --profile systest -f docker-compose-cicdtest.yml -f docker-compose-systest.yml up --build --detach 
-          rm Dockerfile_build_linux
-          rm docker-compose-cicdtest.yml
-          rm Dockerfile_systest_linux
-          rm docker-compose-systest.yml  
       - name: System Integration Test
         id: system_test
         run: |
