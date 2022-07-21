@@ -194,3 +194,17 @@ go test -run Parse  // to create the DB for testing & test the query API
 go test -run ParseCreateDB  // to create the DB for testing 
 go test -run ParseString1   // to test the query API (Must run ParseCreateDB first)
 ```
+## CICD Testing
+
+Try to integrate the build and unit test in the CICD. 
+In the go test, it assumes the presence of Postgresql, Mongo and Redis database. Each of them runs in a separate container. We set up these containers Dockerfile_unittest_env_linux and docker-compose-unittest_env.yml to bring those database containers up in different containers inside the "deploynet" bridge network. Then run go test. 
+
+### Found issues
+
+The go test cannot connect to that servers from the build container. However, inside that build container, after I install proper net-tools, dnsutils, iputils-ping (it was not setup in the docker file), I can ping and nslookup those services. If I install and run mongosh, I also can connect to the mongo server. 
+
+To test this docker environment setup locally, 
+create the link of docker-compose-unittest_env.yml, Dockerfile_build_linux, Dockerfile_unittest_env_link from cicd/docker directory to repository's root directory. Then run 
+```
+DOCKER_PREFIX="testdfstore" docker compose -f docker-compose-unittest_env.yml up --build --detach
+```
