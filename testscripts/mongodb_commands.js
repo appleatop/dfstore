@@ -1,3 +1,4 @@
+// Examples to initalize the mongdo DB 
 db.dropDatabase('test')
 db=db.getSiblingDB('dfstore1')
 db.createCollection('table1')  

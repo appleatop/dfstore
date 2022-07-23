@@ -60,8 +60,6 @@ jobs:
         id: system_test
         run: |
           docker exec ${{steps.docker_prefix.outputs.docker_prefix}}_dfstore bash testscripts/systest.sh 
-
-
       - name: Teardown System Integration Test
         run: |
           docker compose --profile systest -f docker-compose-cicdtest.yml -f docker-compose-systest.yml stop
